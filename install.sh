@@ -7,3 +7,6 @@ pip install -e dependencies/ByteTrack/
 pip install nvidia-pyindex
 pip install nvidia-tensorrt==99.0.0
 pip install git+https://github.com/NVIDIA-AI-IOT/torch2trt.git
+
+# install repo
+pip install -e .
