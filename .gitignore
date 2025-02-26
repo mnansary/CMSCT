@@ -171,3 +171,5 @@ cython_debug/
 .pypirc
 dependencies/ByteTrack/pretrained/
 debug*.*
+videos/
+data/

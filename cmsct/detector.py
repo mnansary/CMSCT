@@ -99,12 +99,15 @@ class Detector(object):
 
 
 if __name__=="__main__":
-    from cmsct.constants import PERSONDET_TRT_MODEL,PERSONDET_EXP_FILE,TrackerArgs
+    #from cmsct.detector import Detector
+    from cmsct.constants import PERSONDET_TRT_MODEL,PERSONDET_EXP_FILE,TrackerArgs,POSE_MODEL_PATH
     from cmsct.reader import VideoReader
+    from cmsct.pose import draw_skeleton
     from yolox.tracker.byte_tracker import BYTETracker
     from argparse import Namespace 
     from yolox.utils.visualize import plot_tracking
     import os
+    from ultralytics import YOLO
     
     save_dir="data/"
     os.makedirs(save_dir,exist_ok=True)
@@ -113,7 +116,10 @@ if __name__=="__main__":
     detector=Detector(PERSONDET_EXP_FILE,PERSONDET_TRT_MODEL)
     args=Namespace(**TrackerArgs)
     tracker=BYTETracker(args)
+    pose_model=YOLO(POSE_MODEL_PATH) 
+    
     frame_id=0
+    
     while True:
         frames, done = reader.read_chunk()
         all_outputs=detector.inference_batch(frames)
@@ -135,6 +141,16 @@ if __name__=="__main__":
                 online_img=plot_tracking(frame,online_tlwhs,online_ids,frame_id=frame_id)
             else:
                 online_img=np.copy(frame)
+
+            # Run pose estimation
+            pose_results = pose_model.track(frame, persist=True, verbose=False)
+            if pose_results[0].boxes.id is not None:
+                keypoints = pose_results[0].keypoints.xy.cpu().numpy()
+                # Process each detection
+                for kpts in keypoints:
+                    # Draw skeleton
+                    draw_skeleton(online_img, kpts)
+
             cv2.imwrite(os.path.join(save_dir,f"{frame_id}.png"),online_img)
                     
         if not frames or done:
